@@ -1,0 +1,1 @@
+# API for predicting sign language based on video for Edusign App
