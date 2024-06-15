@@ -1,11 +1,15 @@
 import json
 from concurrent.futures import ThreadPoolExecutor
+import os
 import cv2
 import numpy as np
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import tensorflow as tf
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 def translate(file_link):
     video_path = file_link
@@ -13,7 +17,7 @@ def translate(file_link):
     video_preprocessed = predict_preprocess(video.copy())
     
     model = tf.keras.models.load_model(
-        filepath='model.h5', #TODO add model path here
+        filepath=os.environ['MODEL_URL'], #TODO add model path here
         custom_objects={
             'EarlyLateDropout': EarlyLateDropout,
             'scce_with_ls': scce_with_ls,
@@ -23,7 +27,7 @@ def translate(file_link):
     
     predictions = model.predict(np.expand_dims(video_preprocessed, axis=0))
     
-    decoder_dict = load_decoder('label_encoder.json') #TODO add encoder path here
+    decoder_dict = load_decoder(os.environ['ENCODER_URL']) #TODO add encoder path here
     
     result = decode_top_prediction(predictions, decoder_dict)
     return result
@@ -113,20 +117,20 @@ def extract_landmarks_from_video(video_path, start_frame=1, end_frame=-1):
     hands_options_video = vision.HandLandmarkerOptions(
         running_mode=vision_running_mode.VIDEO,
         min_hand_detection_confidence=0.5,
-        base_options=base_options(model_asset_path='hand_landmarker.task'), #TODO add hand model path here
+        base_options=base_options(model_asset_path=os.environ['HAND_URL']), #TODO add hand model path here
         num_hands=2
     )
     
     pose_options_video = vision.PoseLandmarkerOptions(
         running_mode=vision_running_mode.VIDEO,
         min_pose_detection_confidence=0.5,
-        base_options=base_options(model_asset_path='pose_landmarker_full.task') #TODO add pose model path here
+        base_options=base_options(model_asset_path=os.environ['POSE_URL']) #TODO add pose model path here
     )
     
     face_options_video = vision.FaceLandmarkerOptions(
         running_mode=vision_running_mode.VIDEO,
         min_face_detection_confidence=0.5,
-        base_options=base_options(model_asset_path='face_landmarker.task') #TODO add face model path here
+        base_options=base_options(model_asset_path=os.environ['FACE_URL']) #TODO add face model path here
     )
     
     hands_detector_video = vision.HandLandmarker.create_from_options(hands_options_video)
